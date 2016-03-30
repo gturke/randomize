@@ -25,22 +25,55 @@ class randomization(object):
             raise Exception('Column {} does not exist in your file. If using strata, please add to file before randomization.'.format(self.strataName))
         self.numConditions = numConditions
         if self.numConditions == None:
-           self.numConditions = 2
+            self.numConditions = 2
         self.minPval = minPval
         if self.minPval == None:
-           self.minPval = .05
+            self.minPval = .05
         #TODO: send error if user seed seems weird
         self.seed = seed
         if seed == None:
-           self.seed = np.random.randint(9999999999999)
-    #TODO: Determine best way to handle strata.
-    def __createStrata__(self):
-        if self.strataName == None:
-            
+            self.seed = np.random.randint(4294967295)
 
-    def randomSort(self, strataFrame):
+    def __randomSort(self, sortFrame):
         np.random.seed(self.seed)
         #generating random values from 0 to length of file, and assigning a unique value to each observation
-        strataFrame['rdmSortVal'] = np.random.choice(len(strataFrame)+1, len(strataFrame), replace = False)
-        strataFrame.sort(['rdmSortVal'], inplace = True)
-    #def assignTreatment(self, 
+        sortFrame['rdmSortVal'] = np.random.choice(len(sortFrame)+1, len(sortFrame), replace = False)
+        sortFrame = sortFrame.sort(['rdmSortVal'])
+        return sortFrame
+    
+    def assignCondition(self, assignFrame):
+        #iself.numConditions
+        #assignFrame
+        conditionCodes = list(range(self.numConditions))
+        startCode = np.random.choice(conditionCodes)
+        counter = 0
+        assignList = []
+        while counter < len(assignFrame):
+            if startCode == (self.numConditions - 1):
+                assignList.append(startCode)
+                startCode = 0
+            else:
+                assignList.append(startCode)
+                startCode += 1
+            startCode += 1
+        assignFrame['condition'] = assignList
+        return assignFrame
+
+    #def balanceCheck(self):
+
+    #ODO: Determine best way to handle strata.
+    def randomStrata(self):
+        univStrata = self.universeDf
+        if self.strataName == None:
+            #calls random sort function on entire universe
+            univStrata = self.__randomSort(univStrata) 
+        else:
+            strataVals = [x for x in set(univStrata[self.strataName])] 
+        #    myFinalDf = #this is where the dataframes will get appended to one another after randomizing and balancing within strata 
+            for strataVal in strataVals:
+                strataFrame = univStrata.loc[univStrata[self.strataName] == strataVal]
+                strataFrame = self.__randomSort(strataFrame)
+                strataFrame = self.assignCondition(strataFrame)
+        return strataFrame
+              
+     
