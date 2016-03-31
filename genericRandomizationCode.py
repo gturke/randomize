@@ -46,16 +46,8 @@ class randomization(object):
         #assignFrame
         conditionCodes = list(range(self.numConditions))
         startCode = np.random.choice(conditionCodes)
-        counter = 0
-        assignList = []
-        while counter < len(assignFrame):
-            if startCode == (self.numConditions - 1):
-                assignList.append(startCode)
-                startCode = 0
-            else:
-                assignList.append(startCode)
-                startCode += 1
-            startCode += 1
+        assignList = conditionCodes[startCode:] + conditionCodes[:startCode]
+        assignList = ((len(self.assignFrame)//self.numConditions)*assignList) + assignList[:(len(self.assignFrame)%self.numConditions)]
         assignFrame['condition'] = assignList
         return assignFrame
 
@@ -63,15 +55,15 @@ class randomization(object):
 
     #ODO: Determine best way to handle strata.
     def randomStrata(self):
-        univStrata = self.universeDf
+        #univStrata = self.universeDf
         if self.strataName == None:
             #calls random sort function on entire universe
-            univStrata = self.__randomSort(univStrata) 
+            self.universeDf = self.__randomSort(self.universeDf) 
         else:
-            strataVals = [x for x in set(univStrata[self.strataName])] 
+            strataVals = [x for x in set(self.universeDf[self.strataName])] 
         #    myFinalDf = #this is where the dataframes will get appended to one another after randomizing and balancing within strata 
             for strataVal in strataVals:
-                strataFrame = univStrata.loc[univStrata[self.strataName] == strataVal]
+                strataFrame = self.universeDf.loc[self.universeDf[self.strataName] == strataVal]
                 strataFrame = self.__randomSort(strataFrame)
                 strataFrame = self.assignCondition(strataFrame)
         return strataFrame
