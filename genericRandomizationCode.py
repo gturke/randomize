@@ -42,12 +42,10 @@ class randomization(object):
         return sortFrame
     
     def assignCondition(self, assignFrame):
-        #iself.numConditions
-        #assignFrame
         conditionCodes = list(range(self.numConditions))
         startCode = np.random.choice(conditionCodes)
         assignList = conditionCodes[startCode:] + conditionCodes[:startCode]
-        assignList = ((len(self.assignFrame)//self.numConditions)*assignList) + assignList[:(len(self.assignFrame)%self.numConditions)]
+        assignList = ((len(assignFrame)//self.numConditions)*assignList) + assignList[:(len(assignFrame)%self.numConditions)]
         assignFrame['condition'] = assignList
         return assignFrame
 

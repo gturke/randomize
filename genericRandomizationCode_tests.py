@@ -14,4 +14,5 @@ print('minimum p value: ' + str(rdm.minPval))
 print('Data Frame: ' + str(df))
 print('Strata Column Name: ' + rdm.strataName)
 
+
 print(rdm.randomStrata())
