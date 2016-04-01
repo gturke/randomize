@@ -34,7 +34,7 @@ class randomization(object):
         if seed == None:
             self.seed = np.random.randint(4294967295)
 
-    def __randomSort(self, sortFrame):
+    def randomSort(self, sortFrame):
         np.random.seed(self.seed)
         #generating random values from 0 to length of file, and assigning a unique value to each observation
         sortFrame['rdmSortVal'] = np.random.choice(len(sortFrame)+1, len(sortFrame), replace = False)
@@ -59,11 +59,15 @@ class randomization(object):
             self.universeDf = self.__randomSort(self.universeDf) 
         else:
             strataVals = [x for x in set(self.universeDf[self.strataName])] 
-        #    myFinalDf = #this is where the dataframes will get appended to one another after randomizing and balancing within strata 
+            #not to be used in final script
+            finalDf = pd.DataFrame()
             for strataVal in strataVals:
-                strataFrame = self.universeDf.loc[self.universeDf[self.strataName] == strataVal]
-                strataFrame = self.__randomSort(strataFrame)
+                strataFrame = pd.DataFrame(self.universeDf.loc[self.universeDf[self.strataName] == strataVal])
+                strataFrame = self.randomSort(strataFrame)
                 strataFrame = self.assignCondition(strataFrame)
-        return strataFrame
+                finalDf = finalDf.append(strataFrame)
+        return finalDf
+
+
               
      
