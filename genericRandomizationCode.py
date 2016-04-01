@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+#import sklearn
+import statsmodels.api as sm #GT: I think statsmodels may be better than scikit learn b/c with sklearn we have to calculate p-vals by hand -- might be worth writing the code so we can do other things with sklearn, but for this project it doesn't seem like the best available option
 
 class randomization(object):
     def __init__(self, universeDf, strataName=None, seed=None, minPval=None, numConditions=None):
@@ -8,7 +10,7 @@ class randomization(object):
         numConditions - Number of treatments plus control (groups) to randomly assign.
         conditionName - Nameplace assiged to groupings determined by conditions argument.
         # runs - Number of times randomization is run.
-        balanceVars - List of variables to use to ensure balanced assignment to treatment.    
+        balanceVars - List of variables to use to ensure balanced assignment to treatment.
         minPval - The minimum acceptable p-value found after balancing variables.
         jointPval - TBD.
         seed - Arbitrary value to allow reproducible randomization of data.
@@ -40,7 +42,7 @@ class randomization(object):
         sortFrame['rdmSortVal'] = np.random.choice(len(sortFrame)+1, len(sortFrame), replace = False)
         sortFrame = sortFrame.sort(['rdmSortVal'])
         return sortFrame
-    
+
     def assignCondition(self, assignFrame):
         conditionCodes = list(range(self.numConditions))
         startCode = np.random.choice(conditionCodes)
@@ -49,21 +51,28 @@ class randomization(object):
         assignFrame['condition'] = assignList
         return assignFrame
 
-    #def balanceCheck(self):
+    """
+    balanceCheck takes a DataFrame,
+    runs a logistic regression of the treatment assignment on the variables defined by the user (in balanceVars)
+    should be a multinomial logit always or when there is more than 2 conditions, otherwise logit
+    figure out multinomial logit function(s) available in python and if it works on a binomial DV
+    or run logit on each treatment against control (always 0)
+    """
+    #pd.get_dummies() -- probably won't need this for conditions
+    def balanceCheck(self, balanceFrame):
+
 
     #ODO: Determine best way to handle strata.
     def randomStrata(self):
         #univStrata = self.universeDf
         if self.strataName == None:
             #calls random sort function on entire universe
-            self.universeDf = self.__randomSort(self.universeDf) 
+            self.universeDf = self.__randomSort(self.universeDf)
         else:
-            strataVals = [x for x in set(self.universeDf[self.strataName])] 
-        #    myFinalDf = #this is where the dataframes will get appended to one another after randomizing and balancing within strata 
+            strataVals = [x for x in set(self.universeDf[self.strataName])]
+        #    myFinalDf = #this is where the dataframes will get appended to one another after randomizing and balancing within strata
             for strataVal in strataVals:
                 strataFrame = self.universeDf.loc[self.universeDf[self.strataName] == strataVal]
                 strataFrame = self.__randomSort(strataFrame)
                 strataFrame = self.assignCondition(strataFrame)
         return strataFrame
-              
-     
