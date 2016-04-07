@@ -1,8 +1,10 @@
 from genericRandomizationCode import randomization
 import pandas as pd
 
-df = pd.DataFrame({'humans':['Grace', 'Audrey', 'Joe', 'Paul', 'Genny'], 'myStrata':['F', 'F', 'M', 'M', 'F']})
+#df = pd.DataFrame({'humans':['Grace', 'Audrey', 'Joe', 'Paul', 'Genny'], 'myStrata':['F', 'F', 'M', 'M', 'F']})
 #df = 'YOLO'
+df = pd.read_csv("http://www.ats.ucla.edu/stata/data/binary.csv")
+
 
 #test randomization with user definitions
 rdm = randomization(df, 'myStrata', 12823, .1, 3)

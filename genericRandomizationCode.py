@@ -3,8 +3,9 @@ import pandas as pd
 #import sklearn
 import statsmodels.api as sm #GT: I think statsmodels may be better than scikit learn b/c with sklearn we have to calculate p-vals by hand -- might be worth writing the code so we can do other things with sklearn, but for this project it doesn't seem like the best available option
 
+#TODO: Find places in script where user may want output
 class randomization(object):
-    def __init__(self, universeDf, strataName=None, seed=None, minPval=None, numConditions=None):
+    def __init__(self, universeDf, strataName=None, seed=None, minPval=None, numConditions=None, balanceVars=None):
         """
         args:
         numConditions - Number of treatments plus control (groups) to randomly assign.
@@ -35,6 +36,9 @@ class randomization(object):
         self.seed = seed
         if seed == None:
             self.seed = np.random.randint(4294967295)
+        self.balanceVars = balanceVars
+        if not isinstance(self.balanceVars, list):
+            raise Exception('Column "balanceVars" must be submitted in list.')
 
     def randomSort(self, sortFrame):
         np.random.seed(self.seed)
@@ -60,8 +64,23 @@ class randomization(object):
     """
     #pd.get_dummies() -- probably won't need this for conditions
     def balanceCheck(self, balanceFrame):
-
-
+        mlogit = sm.MNLogit(balanceFrame['condition'], balanceFramce[self.balanceVars])
+        lgtResult = mlogit.fit()
+        #lgtSummary = lgtResult.summary() #TODO: give user output
+        pVals = lgtResults.pvalues
+        pVals.columns = conditionCodes[1:]
+        pVals = pVals.reset_index()
+        pVals = pVals.rename(columns={'index':'variable'})
+        for index, row in pVals.iterrows():
+            rowName = row[0]
+            counter = 1
+            for val in row[1:]:
+                if val <= self.minPval:
+                    raise Exception('P value for variable {} for condition {} is less than minimum p value, {}.'.format(rowName, counter, minPval))
+                counter += 1
+        print('Minimum p value requirement of {} met.'.format(self.minPval))
+         
+        
     #ODO: Determine best way to handle strata.
     def randomStrata(self):
         #univStrata = self.universeDf
