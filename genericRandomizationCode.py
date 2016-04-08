@@ -22,10 +22,12 @@ class randomization(object):
         if not isinstance(self.universeDf, pd.DataFrame):
             raise Exception('Argument universeDf requires DataFrame object.')
         self.strataName = strataName
-        if type(self.strataName) != str: #TO DO: Fix so accepts strataName = None
+         #TO DO: Fix so accepts strataName = None
+        if self.strataName !=None:
+            if type(self.strataName) != str:
                 raise Exception('Argument strataName must be a string.')
-        elif self.strataName not in self.universeDf.columns:
-            raise Exception('Column {} does not exist in your file. If using strata, please add to file before randomization.'.format(self.strataName))
+            elif self.strataName not in self.universeDf.columns:
+                raise Exception('Column {} does not exist in your file. If using strata, please add to file before randomization.'.format(self.strataName))
         self.numConditions = numConditions
         if self.numConditions == None:
             self.numConditions = 2
@@ -78,8 +80,8 @@ class randomization(object):
             for val in row[1:]:
                 if val <= self.minPval:
                     raise Exception('P value for variable {} for condition {} is less than minimum p value, {}.'.format(rowName, counter, self.minPval))
-                #counter += 1
-        #print('Minimum p value requirement of {} met.'.format(self.minPval))
+                counter += 1
+        print('Minimum p value requirement of {} met.'.format(self.minPval))
 
 
     #ODO: Determine best way to handle strata.
