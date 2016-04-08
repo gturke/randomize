@@ -5,24 +5,24 @@ import statsmodels.api as sm #GT: I think statsmodels may be better than scikit 
 
 #TODO: Find places in script where user may want output
 class randomization(object):
-    def __init__(self, universeDf, strataName=None, seed=None, minPval=None, numConditions=None, balanceVars=None):
+    def __init__(self, universeDf, strataName=None, seed=None, minPval=None, numConditions=None, balanceVars=None, minRuns=None, maxRuns=None, jointPval=None):
         """
         args:
         numConditions - Number of treatments plus control (groups) to randomly assign.
         conditionName - Nameplace assiged to groupings determined by conditions argument.
-        # runs - Number of times randomization is run.
         balanceVars - List of variables to use to ensure balanced assignment to treatment.
         minPval - The minimum acceptable p-value found after balancing variables.
-        jointPval - TBD.
         seed - Arbitrary value to allow reproducible randomization of data.
-        # GT: add jointpval later
+        # GT: for reRandomization: add jointPval, minRuns maxRuns
+        minRuns - The minimum number of times the list will be re-randomized, default value is 10.
+        maxRuns - The minimum number of times the list will be re-randomized, default value is 10.
+        jointPval - The minimum acceptable joint p-value for each randomization when using re-randomization, default value is X. Joint p-value is calculated by ###.
         """
         #if statements handle possible issues with arguments for init
         self.universeDf = universeDf
         if not isinstance(self.universeDf, pd.DataFrame):
             raise Exception('Argument universeDf requires DataFrame object.')
         self.strataName = strataName
-         #TO DO: Fix so accepts strataName = None
         if self.strataName !=None:
             if type(self.strataName) != str:
                 raise Exception('Argument strataName must be a string.')
@@ -37,16 +37,26 @@ class randomization(object):
         #TODO: send error if user seed seems weird
         self.seed = seed
         if seed == None:
-            self.seed = np.random.randint(4294967295)
+            self.seed = np.random.randint(4294967295) #TODO: Return seed to user (upon request or always?) when the user doesn't input a seed
         self.balanceVars = balanceVars
         if not isinstance(self.balanceVars, list):
-            raise Exception('Column "balanceVars" must be submitted in list.')
+            raise Exception('Column "balanceVars" must be submitted as a list of strings.')
+        self.minRuns = minRuns
+        if self.minRuns == None:
+            self.minRuns = 10
+        self.maxRuns = maxRuns
+        if self.maxRuns == None:
+            self.maxRuns = 10
+        self.jointPval = jointPval
+        # if self.jointPval == None:
+                # self.jointPval = XXX.
 
     def randomSort(self, sortFrame):
         np.random.seed(self.seed)
         #generating random values from 0 to length of file, and assigning a unique value to each observation
         sortFrame['rdmSortVal'] = np.random.choice(len(sortFrame)+1, len(sortFrame), replace = False)
         sortFrame = sortFrame.sort(['rdmSortVal'])
+        del sortFrame['rdmSortVal'] #Remove variable for cases where randomization is run more than once(?)
         return sortFrame
 
     def assignCondition(self, assignFrame):
@@ -84,20 +94,18 @@ class randomization(object):
         print('Minimum p value requirement of {} met.'.format(self.minPval))
 
 
-    #ODO: Determine best way to handle strata.
+    #TODO: Determine best way to handle strata.
     def randomStrata(self):
-        #univStrata = self.universeDf
         if self.strataName == None:
-            #calls random sort function on entire universe
+            #calls random sort function on entire universe if there are no strata defined
             self.universeDf = self.__randomSort(self.universeDf)
         else:
-            strataVals = [x for x in set(self.universeDf[self.strataName])]
-            strataVals = [x for x in set(self.universeDf[self.strataName])]
+            strataVals = [x for x in set(self.universeDf[self.strataName])] #Creates a list of the strata values
             #not to be used in final script
             finalDf = pd.DataFrame()
             for strataVal in strataVals:
                 strataFrame = pd.DataFrame(self.universeDf.loc[self.universeDf[self.strataName] == strataVal])
                 strataFrame = self.randomSort(strataFrame)
-                strataFrame = self.assignCondition(strataFrame)
+                strataFrame = self.assignCondition(strataFrame) #Should we do this?
                 finalDf = finalDf.append(strataFrame)
         return finalDf
