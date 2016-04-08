@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-#import sklearn
 import statsmodels.api as sm #GT: I think statsmodels may be better than scikit learn b/c with sklearn we have to calculate p-vals by hand -- might be worth writing the code so we can do other things with sklearn, but for this project it doesn't seem like the best available option
 
 #TODO: Find places in script where user may want output
@@ -67,14 +66,6 @@ class randomization(object):
         assignFrame['condition'] = assignList
         return assignFrame
 
-    """
-    balanceCheck takes a DataFrame,
-    runs a logistic regression of the treatment assignment on the variables defined by the user (in balanceVars)
-    should be a multinomial logit always or when there is more than 2 conditions, otherwise logit
-    figure out multinomial logit function(s) available in python and if it works on a binomial DV
-    or run logit on each treatment against control (always 0)
-    """
-    #pd.get_dummies() -- probably won't need this for conditions
     def balanceCheck(self, balanceFrame):
         conditionCodes = list(range(self.numConditions))
         mlogit = sm.MNLogit(balanceFrame['condition'], balanceFrame[self.balanceVars])
@@ -93,19 +84,40 @@ class randomization(object):
                 counter += 1
         print('Minimum p value requirement of {} met.'.format(self.minPval))
 
-
-    #TODO: Determine best way to handle strata.
     def randomStrata(self):
         if self.strataName == None:
-            #calls random sort function on entire universe if there are no strata defined
-            self.universeDf = self.__randomSort(self.universeDf)
+            strataFrame = self.randomSort(self.universeDf)
+            strataFrame = self.assignCondition(strataFrame)
+            finalDf = strataFrame
         else:
-            strataVals = [x for x in set(self.universeDf[self.strataName])] #Creates a list of the strata values
-            #not to be used in final script
             finalDf = pd.DataFrame()
+            strataVals = [x for x in set(self.universeDf[self.strataName])]
             for strataVal in strataVals:
                 strataFrame = pd.DataFrame(self.universeDf.loc[self.universeDf[self.strataName] == strataVal])
                 strataFrame = self.randomSort(strataFrame)
-                strataFrame = self.assignCondition(strataFrame) #Should we do this?
+                strataFrame = self.assignCondition(strataFrame)
                 finalDf = finalDf.append(strataFrame)
         return finalDf
+
+    """ Rerandomization function
+    Consider options for selecting randomization with the optimal split of p-values
+    Largest p-value sum is the most basic calculation, but there are some issues
+    Other randomizations may actually offer a better distribution all around,
+    and the summed p-val could be impacted by combinations of very high p-vals offset by lower p-vals
+
+    Possibly consider distribution of p-vals
+
+    MY FIRST PLAN:
+    Or, iterate by 0.1 or .01 to find the randomization with the largest p-values for all variables?
+    Find the minimum p-value for each iteration -- this is the smallest number for the randomization
+    Then take the randomization that has the largest maximum p-val
+
+    Before we can test p-vals, we need to run randomizations, balance checks, and store the p-vals for each one.
+    """
+
+#########
+######### PICK UP HERE
+#########
+
+
+#    def reRandomize(self):
