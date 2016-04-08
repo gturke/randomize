@@ -22,8 +22,8 @@ class randomization(object):
         if not isinstance(self.universeDf, pd.DataFrame):
             raise Exception('Argument universeDf requires DataFrame object.')
         self.strataName = strataName
-        if type(self.strataName) != str:
-            raise Exception('Argument strataName must be a string.')
+        if type(self.strataName) != str: #TO DO: Fix so accepts strataName = None
+                raise Exception('Argument strataName must be a string.')
         elif self.strataName not in self.universeDf.columns:
             raise Exception('Column {} does not exist in your file. If using strata, please add to file before randomization.'.format(self.strataName))
         self.numConditions = numConditions
@@ -64,10 +64,11 @@ class randomization(object):
     """
     #pd.get_dummies() -- probably won't need this for conditions
     def balanceCheck(self, balanceFrame):
-        mlogit = sm.MNLogit(balanceFrame['condition'], balanceFramce[self.balanceVars])
+        conditionCodes = list(range(self.numConditions))
+        mlogit = sm.MNLogit(balanceFrame['condition'], balanceFrame[self.balanceVars])
         lgtResult = mlogit.fit()
         #lgtSummary = lgtResult.summary() #TODO: give user output
-        pVals = lgtResults.pvalues
+        pVals = lgtResult.pvalues
         pVals.columns = conditionCodes[1:]
         pVals = pVals.reset_index()
         pVals = pVals.rename(columns={'index':'variable'})
@@ -76,11 +77,11 @@ class randomization(object):
             counter = 1
             for val in row[1:]:
                 if val <= self.minPval:
-                    raise Exception('P value for variable {} for condition {} is less than minimum p value, {}.'.format(rowName, counter, minPval))
-                counter += 1
-        print('Minimum p value requirement of {} met.'.format(self.minPval))
-         
-        
+                    raise Exception('P value for variable {} for condition {} is less than minimum p value, {}.'.format(rowName, counter, self.minPval))
+                #counter += 1
+        #print('Minimum p value requirement of {} met.'.format(self.minPval))
+
+
     #ODO: Determine best way to handle strata.
     def randomStrata(self):
         #univStrata = self.universeDf
@@ -89,7 +90,7 @@ class randomization(object):
             self.universeDf = self.__randomSort(self.universeDf)
         else:
             strataVals = [x for x in set(self.universeDf[self.strataName])]
-            strataVals = [x for x in set(self.universeDf[self.strataName])] 
+            strataVals = [x for x in set(self.universeDf[self.strataName])]
             #not to be used in final script
             finalDf = pd.DataFrame()
             for strataVal in strataVals:
@@ -98,7 +99,3 @@ class randomization(object):
                 strataFrame = self.assignCondition(strataFrame)
                 finalDf = finalDf.append(strataFrame)
         return finalDf
-
-
-              
-     
