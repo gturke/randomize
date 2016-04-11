@@ -42,11 +42,16 @@ class randomization(object):
         if not isinstance(self.balanceVars, list):
             raise Exception('Column "balanceVars" must be submitted as a list of strings.')
         self.minRuns = minRuns
-        if self.minRuns == None:
-            self.minRuns = 10
         self.maxRuns = maxRuns
+        if self.minRuns == None:
+            if self.maxRuns == None:
+                self.minRuns = 10
+            else:
+                self.minRuns = self.maxRuns
         if self.maxRuns == None:
-            self.maxRuns = 10
+            self.maxRuns = self.minRuns
+        if self.maxRuns < self.minRuns:
+            raise Exception ('Maximum runs value cannot be less than the minimum runs value.')
         self.minJointP = minJointP
         if self.minJointP == None:
                 self.minJointP = 0.5
@@ -105,35 +110,39 @@ class randomization(object):
                 finalDf = finalDf.append(strataFrame)
         return finalDf
 
-    # TODO: Add syntax to re-randomize until maxRuns if minJointP threshold is not met
+    #TODO: Resolve issue - seed approaches zero with more iterations - not random!
     def reRandomize(self):
         n = 1
         pValDict = {}
-        while n <= self.minRuns: #default is 10
-            # Run randomstrata function - randomly sort and assign conditions
-            # Where do we use 'self.' ?
+        print("Starting seed: " + str(self.seed) + "\n")
+        while n <= self.maxRuns:
+            # Run randomstrata function to randomly sort and assign conditions
             dfN = self.randomStrata()
-            # Save lowest p-val
-            pValsN = self.pValCheck(dfN)
+            # Save lowest p-val in a balance check for each iteration
+            pValsN = self.pValCheck(dfN) # Creates a DataFrame of all p-values from balance check
             lowP = 1
             for index, row in pValsN.iterrows():
                 rowname = row[0]
                 counter = 1
                 for val in row[1:]:
-                    if val <=lowP:
-                        lowP = val
+                    if val <= lowP:
+                        lowP = val # Iterates through all p-values and finds the smallest value, stores as lowP
                     counter +=1
-            #print("Seed: "+ str(self.seed), "\nMax P Val: "+ str(maxVal))
-            pValDict[self.seed]=lowP
-            # Create a new seed
-            self.seed = np.random.choice(self.seed) #Is there a better way to alter this value through iterations?
-            n +=1
-        # Add in after re-randomizing through maxRuns
-        # if max(pValDict.values()) < self.minJointP:
-        #     raise Exception("Specified value for minimum joint p-value {} not achieved.".format(self.minJointP))
-        self.seed = max(pValDict, key=lambda k: pValDict[k])
-        print("\nSeed, minimum p-value pair:")
-        print(pValDict)
-        print("\nSeed for optimal distribution: "+ str(self.seed))
-        print("Smallest p-value with seed {}: ".format(self.seed) + str(pValDict[self.seed]))
-        return self.randomStrata()
+                pValDict[self.seed]=lowP # Adds key:value pair of seed:lowest p-value to dictionary pValDict
+            # Creates a new seed
+            print("Try: "+ str(n) + "\nSeed: " + str(self.seed) + "\nMinimum p-value: " + str(pValDict[self.seed]) + "\n") #Remove after
+            if n < self.minRuns:
+                self.seed = np.random.choice(4294967295)
+                n+=1
+            elif n >= self.minRuns: #if n is in range minRuns - maxRuns (inclusive)
+                if max(pValDict.values()) >= self.minJointP:
+                    self.seed = max(pValDict, key=lambda k: pValDict[k])
+                    print("\nSeed, p-value dictionary:\n" + str(pValDict))
+                    print("\nThe final, optimal seed selected is {0}, and the minimum p-value associated with this randomization in a balance check is {1:.2f}.".format(self.seed, pValDict[self.seed]))
+                    return self.randomStrata()
+                    n = self.maxRuns+1 # Stops the while loop
+                elif n == self.maxRuns:
+                    raise Exception("Specified value for minimum joint p-value {} not achieved in maximum number of runs alotted ({}).".format(self.minJointP, self.maxRuns))
+                else: # continue loop!
+                    self.seed = np.random.choice(4294967295)
+                    n +=1
