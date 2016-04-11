@@ -4,7 +4,7 @@ import statsmodels.api as sm #GT: I think statsmodels may be better than scikit 
 
 #TODO: Find places in script where user may want output
 class randomization(object):
-    def __init__(self, universeDf, strataName=None, seed=None, minPval=None, numConditions=None, balanceVars=None, minRuns=None, maxRuns=None, jointPval=None):
+    def __init__(self, universeDf, strataName=None, seed=None, minPval=None, numConditions=None, balanceVars=None, minRuns=None, maxRuns=None, minJointP=None):
         """
         args:
         numConditions - Number of treatments plus control (groups) to randomly assign.
@@ -12,10 +12,11 @@ class randomization(object):
         balanceVars - List of variables to use to ensure balanced assignment to treatment.
         minPval - The minimum acceptable p-value found after balancing variables.
         seed - Arbitrary value to allow reproducible randomization of data.
-        # GT: for reRandomization: add jointPval, minRuns maxRuns
+        # GT: for reRandomization: add minJointP, minRuns maxRuns
         minRuns - The minimum number of times the list will be re-randomized, default value is 10.
         maxRuns - The minimum number of times the list will be re-randomized, default value is 10.
-        jointPval - The minimum acceptable joint p-value for each randomization when using re-randomization, default value is X. Joint p-value is calculated by ###.
+        minJointP - The minimum joint p-value acceptable for the optimal randomization when using re-randomization.
+        The the minimum joint p-value the is the smallest p-value obtained in a balnace check. The default value is 0.5.
         """
         #if statements handle possible issues with arguments for init
         self.universeDf = universeDf
@@ -46,9 +47,9 @@ class randomization(object):
         self.maxRuns = maxRuns
         if self.maxRuns == None:
             self.maxRuns = 10
-        self.jointPval = jointPval
-        # if self.jointPval == None:
-                # self.jointPval = XXX.
+        self.minJointP = minJointP
+        if self.minJointP == None:
+                self.minJointP = 0.5
 
     def randomSort(self, sortFrame):
         np.random.seed(self.seed)
@@ -66,15 +67,20 @@ class randomization(object):
         assignFrame['condition'] = assignList
         return assignFrame
 
-    def balanceCheck(self, balanceFrame):
+    def pValCheck(self, balanceFrame):
+        if 'condition' not in balanceFrame.columns:
+            raise Exception('You must assign conditions before performing a balance check.')
         conditionCodes = list(range(self.numConditions))
         mlogit = sm.MNLogit(balanceFrame['condition'], balanceFrame[self.balanceVars])
         lgtResult = mlogit.fit()
-        #lgtSummary = lgtResult.summary() #TODO: give user output
         pVals = lgtResult.pvalues
         pVals.columns = conditionCodes[1:]
         pVals = pVals.reset_index()
         pVals = pVals.rename(columns={'index':'variable'})
+        return pVals
+
+    def balanceCheck(self, balanceFrame):
+        pVals = self.pValCheck(balanceFrame)
         for index, row in pVals.iterrows():
             rowName = row[0]
             counter = 1
@@ -99,25 +105,35 @@ class randomization(object):
                 finalDf = finalDf.append(strataFrame)
         return finalDf
 
-    """ Rerandomization function
-    Consider options for selecting randomization with the optimal split of p-values
-    Largest p-value sum is the most basic calculation, but there are some issues
-    Other randomizations may actually offer a better distribution all around,
-    and the summed p-val could be impacted by combinations of very high p-vals offset by lower p-vals
-
-    Possibly consider distribution of p-vals
-
-    MY FIRST PLAN:
-    Or, iterate by 0.1 or .01 to find the randomization with the largest p-values for all variables?
-    Find the minimum p-value for each iteration -- this is the smallest number for the randomization
-    Then take the randomization that has the largest maximum p-val
-
-    Before we can test p-vals, we need to run randomizations, balance checks, and store the p-vals for each one.
-    """
-
-#########
-######### PICK UP HERE
-#########
-
-
-#    def reRandomize(self):
+    # TODO: Add syntax to re-randomize until maxRuns if minJointP threshold is not met
+    def reRandomize(self):
+        n = 1
+        pValDict = {}
+        while n <= self.minRuns: #default is 10
+            # Run randomstrata function - randomly sort and assign conditions
+            # Where do we use 'self.' ?
+            dfN = self.randomStrata()
+            # Save lowest p-val
+            pValsN = self.pValCheck(dfN)
+            lowP = 1
+            for index, row in pValsN.iterrows():
+                rowname = row[0]
+                counter = 1
+                for val in row[1:]:
+                    if val <=lowP:
+                        lowP = val
+                    counter +=1
+            #print("Seed: "+ str(self.seed), "\nMax P Val: "+ str(maxVal))
+            pValDict[self.seed]=lowP
+            # Create a new seed
+            self.seed = np.random.choice(self.seed) #Is there a better way to alter this value through iterations?
+            n +=1
+        # Add in after re-randomizing through maxRuns
+        # if max(pValDict.values()) < self.minJointP:
+        #     raise Exception("Specified value for minimum joint p-value {} not achieved.".format(self.minJointP))
+        self.seed = max(pValDict, key=lambda k: pValDict[k])
+        print("\nSeed, minimum p-value pair:")
+        print(pValDict)
+        print("\nSeed for optimal distribution: "+ str(self.seed))
+        print("Smallest p-value with seed {}: ".format(self.seed) + str(pValDict[self.seed]))
+        return self.randomStrata()
