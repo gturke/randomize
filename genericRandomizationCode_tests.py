@@ -1,26 +1,24 @@
-from genericRandomizationCode import randomization
+import numpy as np
 import pandas as pd
+import statsmodels.api as sm
+from genericRandomizationCode import randomization
 
-#df = pd.DataFrame({'humans':['Grace', 'Audrey', 'Joe', 'Paul', 'Genny'], 'myStrata':['F', 'F', 'M', 'M', 'F']})
-#df = 'YOLO'
-df = pd.read_csv("http://www.ats.ucla.edu/stata/data/binary.csv")
-
+df = pd.read_csv("http://www.ats.ucla.edu/stata/data/binary.csv") # for some reason only works in ipython notebook but returns parsing error when run from command line
 
 #test randomization with user definitions
-rdm = randomization(df, 'myStrata', 12823, .1, 3)
-#test without user defs
-#rdm = randomization()
+rdm = randomization(df, seed=12823, minPval=.1, numConditions=3, balanceVars=['gpa','gre'])
 print('seed: ' + str(rdm.seed))
 print('number of conditions: ' + str(rdm.numConditions))
 print('minimum p value: ' + str(rdm.minPval))
 print('Data Frame: ' + str(df))
 print('Strata Column Name: ' + rdm.strataName)
-
-#isn't a complete function
 print(rdm.randomStrata())
 
-#Does not error
-#print(rdm.randomSort(df))
-
-#Does not error
-#print(rdm.assignCondition(rdm.randomSort(df)))
+#test without user defs
+rdm2 = randomization()
+print('seed: ' + str(rdm2.seed))
+print('number of conditions: ' + str(rdm2.numConditions))
+print('minimum p value: ' + str(rdm2.minPval))
+print('Data Frame: ' + str(df))
+print('Strata Column Name: ' + rdm2.strataName)
+print(rdm2.randomStrata())
