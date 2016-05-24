@@ -1,4 +1,5 @@
-# Translate Re-Randomization Code from Stata Syntax to Python
+# Randomize
+##### genericRandomizationCode.py
 ##### Created by Audrey Sonntag and Grace Turke
 Reference code written by Chris Mann and Chris Kennedy, as well as Annie Wang.
 
