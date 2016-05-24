@@ -3,7 +3,7 @@
 Reference code written by Chris Mann and Chris Kennedy, as well as Annie Wang.
 
 # Goal
-To create a function that will randomize a Python Pandas dataframe with defined strata and provide an option to re-randomize.
+Randomize a Python Pandas dataframe with defined strata and provide an option to re-randomize.
 
 # Functions
 * \_\_init\_\_()
