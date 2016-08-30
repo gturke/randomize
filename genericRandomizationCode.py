@@ -5,15 +5,18 @@ import statsmodels.api as sm
 #TODO: Find places in script where user may want output
 class randomization(object):
     def __init__(self, universeDf, strataName=None, seed=None, minPval=None, numConditions=None, balanceVars=None, minRuns=None, maxRuns=None, minJointP=None):
-        """
-        args:
-        numConditions - Number of groups (treatments plus control) to randomly assign.
-        balanceVars - List of variables to use to ensure balanced assignment to treatment. These should be entered as a list of strings.
-        minPval - The minimum acceptable p-value for each variable when using multinomial logistic regression to check the balance of assignment to treatment.
-        seed - Arbitrary value to allow reproducible randomization of data. We recommend generating a random number using Random.org. The value must be between 0 and 4,294,967,295.
-        minRuns - The minimum number of times the list will be re-randomized.
-        maxRuns - The minimum number of times the list will be re-randomized. If only minRuns or maxRuns is specified by the user, the values will be equal to one another. If no values are specified by the user, the default value is 10.
-        minJointP - The minimum joint p-value acceptable for the optimal randomization when using re-randomization. The default value is 0.5. This ensures in a balance check, all variables yield a p-value above or equal to the specified threshold.
+        """Randomization (with optional re-randomization for optimum P-val) of created or defined strata within assigned conditions.
+
+        Args:
+        universeDf -- Pandas dataframe of data to be randomized.
+        strataName -- Name of field containing strata definition. Must be pre-created by user.
+        seed -- Arbitrary value to allow reproducible randomization of data. We recommend generating a random number using Random.org. The value must be between 0 and 4,294,967,295.
+        minPval -- The minimum acceptable p-value for each variable when using multinomial logistic regression to check the balance of assignment to treatment.
+        numConditions -- Number of groups (treatments plus control) to randomly assign.
+        balanceVars -- List of variables to use to ensure balanced assignment to treatment. These should be entered as a list of strings.
+        minRuns -- The minimum number of times the list will be re-randomized.
+        maxRuns -- The minimum number of times the list will be re-randomized. If only minRuns or maxRuns is specified by the user, the values will be equal to one another. If no values are specified by the user, the default value is 10.
+        minJointP -- The minimum joint p-value acceptable for the optimal randomization when using re-randomization. The default value is 0.5. This ensures in a balance check, all variables yield a p-value above or equal to the specified threshold.
         """
         self.universeDf = universeDf
         if not isinstance(self.universeDf, pd.DataFrame):
