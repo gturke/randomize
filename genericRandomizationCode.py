@@ -4,6 +4,7 @@ import statsmodels.api as sm
 
 #TODO: Find places in script where user may want output
 class randomization(object):
+	#TODO: Use proper exception syntax.
     def __init__(self, universeDf, strataName=None, seed=None, minPval=None, numConditions=None, balanceVars=None, minRuns=None, maxRuns=None, minJointP=None):
         """Randomization (with optional re-randomization for optimum P-val) of created or defined strata within assigned conditions.
 
@@ -54,13 +55,19 @@ class randomization(object):
         self.minJointP = minJointP
         if self.minJointP == None:
             self.minJointP = 0.5
+	
+	#TODO: possibly don't use this function, use pd.df.sample() instead.            
+    def __randomSort(self, sortFrame):
+    	"""Randomly shuffle entire submitted dataframe.
 
-    def randomSort(self, sortFrame):
-        np.random.seed(self.seed) # Sets seed for reproducibility
-        sortFrame['rdmSortVal'] = np.random.choice(len(sortFrame)+1, len(sortFrame), replace = False)    # Generates random values from 0 to length of file, and assigns a unique value to each observation
-        sortFrame = sortFrame.sort(['rdmSortVal']) # Sorts frame according to random value
-        del sortFrame['rdmSortVal'] # Removes sort value from data frame
-        return sortFrame # Returns data frame, randomly sorted
+		Args:
+		sortFrame -- Dataframe of any data that needs to be randomized.
+    	"""
+        np.random.seed(self.seed)
+        sortFrame['rdmSortVal'] = np.random.choice(len(sortFrame)+1, len(sortFrame), replace = False)
+        sortFrame = sortFrame.sort(['rdmSortVal'])
+        del sortFrame['rdmSortVal'] # if deleting this column, we can likely use pd.df.sample(frac = 1, randomState = seed)
+        return sortFrame
 
     def assignCondition(self, assignFrame):
         conditionCodes = list(range(self.numConditions))
@@ -95,7 +102,7 @@ class randomization(object):
 
     def randomStrata(self):
         if self.strataName == None: # If no strata are defined, randomly sorts the entire data frame and assigns conditions
-            strataFrame = self.randomSort(self.universeDf)
+            strataFrame = self.__randomSort(self.universeDf)
             strataFrame = self.assignCondition(strataFrame)
             finalDf = strataFrame # Returns randomly-sorted data frame with 'condition' appended
         else:
@@ -103,7 +110,7 @@ class randomization(object):
             strataVals = [x for x in set(self.universeDf[self.strataName])] # Creates a list of the unique strata values
             for strataVal in strataVals: # Loops through unique values of the strata
                 strataFrame = pd.DataFrame(self.universeDf.loc[self.universeDf[self.strataName] == strataVal]) # Creates a data frame for each strata
-                strataFrame = self.randomSort(strataFrame) # Randomly sorts the data frame of that strata
+                strataFrame = self.__randomSort(strataFrame) # Randomly sorts the data frame of that strata
                 strataFrame = self.assignCondition(strataFrame) # Assigns conditions to the data frame of that strata
                 finalDf = finalDf.append(strataFrame) # Appends randomly-sorted data frame of that strata with 'condition' appended to initially empty data frame
         return finalDf # Returns complete data frame with condition assigned. Data frame will be ordered by strata and randomly sorted within strata
