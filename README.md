@@ -1,22 +1,9 @@
-# Randomize
-##### genericRandomizationCode.py
-##### Created by Audrey Sonntag and Grace Turke
-Reference code written by Chris Mann and Chris Kennedy, as well as Annie Wang.
+# Re-Randomization Program for Python
+**Authors:** <a href=mailto:gturke@aflcio.org>Grace Turke</a> and <a href=mailto:asonntag@aflcio.org>Audrey Sonntag</a>
 
-# Goal
-Randomize a Python Pandas dataframe with defined strata and provide an option to re-randomize.
+**Last Code Update:** 20160830
 
-# Functions
-* \_\_init\_\_()
-* randomSort
-* assignCondition
-* pValCheck
-* balanceCheck
-* randomStrata
-* reRandomize
+Builds on code written by [Christopher Mann and Chris Kennedy](https://github.com/ck37/randomize_ado) (Stata re-randomization module) and <a href=mailto:awang@analystinstitute.org>Annie Wang</a> (Python randomization module, not publically available)
 
-# TODO's
-1. Add Main()
-2. Delete excessive commenting
-3. Investigate alternate ways to write errors
-4. Add docstrings to all functions
+## To Dos:
+1. Update readme with instructions for new users
